@@ -1,29 +1,42 @@
 pipeline {
     agent any
 
+    environment {
+        BUILD_DIR = 'build'
+    }
+
     stages {
-        stage('Checkout Source') {
+        stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/quanzzzzzz/MMM.git'
             }
         }
 
-        stage('Serve Static Web') {
+        stage('Prepare Build') {
             steps {
-                bat '''
-                    echo === Serving web at http://localhost:8080 ===
-                    start python -m http.server 8080
-                '''
+                echo 'Copying static files to build directory...'
+                bat 'mkdir %BUILD_DIR%'
+                bat 'copy *.html %BUILD_DIR%'
+                bat 'copy *.css %BUILD_DIR%'
+                bat 'copy *.js %BUILD_DIR%'
+                bat 'copy *.png %BUILD_DIR%'
+                bat 'copy *.jpg %BUILD_DIR%'
+            }
+        }
+
+        stage('Archive Build') {
+            steps {
+                archiveArtifacts artifacts: "${BUILD_DIR}/**", fingerprint: true
             }
         }
     }
 
     post {
         success {
-            echo '✅ Web đang chạy tại http://localhost:8080'
+            echo '✅ Web tĩnh đã được build thành công!'
         }
         failure {
-            echo '❌ Lỗi khi chạy server (kiểm tra repo hoặc Python).'
+            echo '❌ Có lỗi khi build web!'
         }
     }
 }
